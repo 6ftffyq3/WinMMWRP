@@ -29,7 +29,7 @@ jobs:
 
     - name: Build WinMMWRP
       run: |
-        xmake f -m release -p mingw -y
+        xmake f -m release -p windows -y
         xmake -v
         xmake install -o "$(pwd)/dist"
         cd dist
