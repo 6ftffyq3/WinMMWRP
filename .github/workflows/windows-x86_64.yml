@@ -1,0 +1,55 @@
+name: Build Windows x86_64
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v5
+      with:
+        submodules: recursive
+
+    - name: Setup MSYS2
+      uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        install: git base-devel tree zip unzip mingw-w64-x86_64-xmake mingw-w64-x86_64-toolchain
+
+    - name: Build WinMMWRP
+      run: |
+        xmake f -m release -p mingw -y
+        xmake -v
+        xmake install -o "$(pwd)/dist"
+        cd dist
+        tree
+
+    - name: Zip artifacts
+      run: |
+        zip -r WinMMWRP-build.zip *
+        (cd dist/bin && zip -r ../../WinMMWRP-x86_64.zip *)
+        (cd "${RUNNER_TEMP}" && zip -r msys64.zip msys64)
+        mv "${RUNNER_TEMP}/msys64.zip" .
+
+    - name: Create or Update "latest" GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: latest
+        name: Build Windows x86_64
+        body: "${{ github.event.head_commit.message }} (commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }}))"
+        files: |
+          WinMMWRP-x86_64.zip
+          WinMMWRP-build.zip
+          msys64.zip
+        overwrite_files: true
