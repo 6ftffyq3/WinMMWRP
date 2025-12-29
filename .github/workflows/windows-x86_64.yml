@@ -34,6 +34,8 @@ jobs:
         xmake install -o "$(pwd)/dist"
         cd dist
         tree
+        cd bin
+        cp "${MINGW_PREFIX}/bin/libwinpthread-1.dll" .
 
     - name: Zip artifacts
       run: |
